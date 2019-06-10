@@ -22,7 +22,24 @@ import com.facebook.react.bridge.ReactContext;
 public class MainActivity extends ReactActivity {
     WahooService mService;
     boolean mBound = false;
+    ServiceConnection connection = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        WahooService.LocalBinder binder = (WahooService.LocalBinder) service;
+        mService = binder.getService();
+        ReactContext reactContext = getReactNativeHost().getReactInstanceManager().getCurrentReactContext();
+        mService.setContext(reactContext);
+        mBound = true;
+    }
 
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        mBound = false;
+    }
+    // Checking permissions on init
+
+
+    };
 
     String[] perms = {
             "android.permission.ACCESS_COARSE_LOCATION",
@@ -34,6 +51,8 @@ public class MainActivity extends ReactActivity {
      * Returns the name of the main component registered from JavaScript.
      * This is used to schedule rendering of the component.
      */
+    @Override public void invokeDefaultOnBackPressed() { moveTaskToBack(true); }
+
     @Override
     protected String getMainComponentName() {
         return "Capstone";
@@ -55,37 +74,38 @@ public class MainActivity extends ReactActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = new Intent(this, WahooService.class);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-
-                ServiceConnection connection = new ServiceConnection() {
-                    @Override
-                    public void onServiceConnected(ComponentName name, IBinder service) {
-                        WahooService.LocalBinder binder = (WahooService.LocalBinder) service;
-                        mService = binder.getService();
-                        ReactContext reactContext = getReactNativeHost().getReactInstanceManager().getCurrentReactContext();
-                        mService.setContext(reactContext);
-                        mBound = true;
-                    }
-
-                    @Override
-                    public void onServiceDisconnected(ComponentName name) {
-                        mBound = false;
-                    }
-                    // Checking permissions on init
-
-
-                };
-                bindService(intent,connection, Context.BIND_AUTO_CREATE);
-
-            }
-        }, 1000);
 
 
         checkPerms();
 
 
     }
+    @Override 
+    protected void onStart(){
+        super.onStart();
+        Intent intent = new Intent(this, WahooService.class);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                if(mBound == false)
+                {
+                bindService(intent,connection, Context.BIND_AUTO_CREATE);
+                mBound = true;
+                }
+            }
+        }, 5000);
+
+    }
+    @Override
+    protected void onStop(){
+        super.onStop();
+        if(mBound)
+        {
+            unbindService(connection);
+        }
+
+    }
+
+    
 }

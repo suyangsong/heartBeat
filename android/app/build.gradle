@@ -107,6 +107,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        manifestPlaceholders = [
+            appAuthRedirectScheme: "io.identittyserver.demo"
+        ]
     }
     splits {
         abi {
@@ -138,6 +141,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-app-auth')
     implementation 'com.android.support:appcompat-v7:+'
     implementation 'com.android.support:support-compat:+'
     implementation fileTree(dir: "libs", include: ["*.jar"])
