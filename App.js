@@ -32,8 +32,7 @@ export default class App extends Component<Props> {
         if(generate)
         {
                counter = setInterval(()=>{
-               let dHR = Math.floor((Math.random() * 110) + 70);
-               this.setState({...this.state, dummyheartrate:dHR, counter_id:counter})
+                   this.setState({...this.state, dummyheartrate:this.state.dummyheartrate+1});
             }, 1000)
         }   
         else
@@ -107,12 +106,12 @@ export default class App extends Component<Props> {
         Linking.getInitialURL().then(url => {
             if (url) this.handleRedirectUri(url);
         });
-        //this.subscription = DeviceEventEmitter.addListener("onHeartrate", this.handleHeartrateChange);
+        this.subscription = DeviceEventEmitter.addListener("onHeartrate", this.handleHeartrateChange);
             this.dumbHRgenerator(true);
 
     }
     componentWillUnmount(){
-        //   this.subscription.remove();
+           this.subscription.remove();
             this.dumbHRgenerator(false);
     }
     componentDidUpdate(){
@@ -168,7 +167,7 @@ export default class App extends Component<Props> {
                 <Text style={styles.instructions}>{this.state.dummyheartrate}</Text>
                 <Button title={"login to spotify"} onPress={this.handleAuth} />
             </View>
-            <Buttoncluster access_token={this.state.access_token} playlist_id = {this.state.playlist_id} dummyheartrate = {this.state.dummyheartrate}/>
+            <Buttoncluster access_token={this.state.access_token} playlist_id = {this.state.playlist_id} heartrate = {this.state.dummyheartrate}/>
         </View>
     );
   }

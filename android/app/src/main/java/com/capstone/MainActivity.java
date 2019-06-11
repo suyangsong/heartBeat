@@ -94,7 +94,7 @@ public class MainActivity extends ReactActivity {
                 mBound = true;
                 }
             }
-        }, 5000);
+        }, 1000);
 
     }
     @Override

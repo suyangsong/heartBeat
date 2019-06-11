@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {TouchableNativeFeedback, Button, Platform, StyleSheet, Text, View, Linking} from 'react-native';
+import {Alert,TouchableNativeFeedback, Button, Platform, StyleSheet, Text, View, Linking} from 'react-native';
 import qs from 'qs';
 import URL from 'url-parse';
 import axios from 'axios';
@@ -33,45 +33,69 @@ export default class Buttoncluster extends Component<Props> {
             "funk",
             "hip-hop"
         ],
-        current_seed:"anime"
+        current_seed:"anime",
     };
         stablizer=0;
         accumulator=0;
         updatenum=0;
-
+    skiptonext = false;
+    track_is_ending=true;
+    track_detection_lock=false;
     componentDidUpdate(prevProps, prevState){
-       if (Math.abs(this.props.dummyheartrate - prevProps.dummyheartrate) > 5 )
+        if(this.props.heartrate != "__")
+        {
+       if (Math.abs(this.props.heartrate - prevProps.heartrate) > 5 )
        {
            this.accumulator++;
            if(this.accumulator>5)
            {
                 console.log("large change detected");
-                this.stablizer=0;
+               this.stablizer=0;
+               this.skiptonext = true;
                 this.RequestNextSong();
 
            }
        }   
+        
+
         else
         {
-            if (Math.abs(this.props.dummyheartrate - prevProps.dummyheartrate) < 5 )
-         {
-            this.stablizer++;
-            if(this.stablizer == 3)
+            if (Math.abs(this.props.heartrate - prevProps.heartrate) < 5 )
+            {  
+                this.stablizer++;
+             if(this.stablizer > 3)
             {
-                console.log("heartrate stabilized");
+                console.log("heartrate stabilized")
                 this.accumulator = 0;
+                if(this.track_is_ending == true)
+                {
+                    console.log("skipping to next");
+                    this.skiptonext = false;
+                    this.RequestNextSong();
+                    this.track_is_ending = false;
+                }
             }
          }
         }
-           
+        }  
     };
+    componentDidMount(){
+
+                    let leint = setInterval(this.compareplayback,500);
+                    this.setState({...this.state, IntV:leint});
+    }
+
+    componentWillUnmount(){
+        clearInterval(this.state.IntV);
+    }
+
 
     RequestNextSong = () =>
     {
         this.accumulator=0;
         const data = qs.stringify({
             limit:1, 
-            target_tempo:this.props.dummyheartrate,
+            target_tempo:this.props.heartrate,
             seed_genres:this.state.current_seed,
             min_danceability:0.5,
             market:"CA"
@@ -79,8 +103,6 @@ export default class Buttoncluster extends Component<Props> {
         const headers = {
             'Authorization':'Bearer '+this.props.access_token
         }; 
-       console.log(data);
-       console.log(headers);
         axios.get(
             `https://api.spotify.com/v1/recommendations?${data}`,
             {
@@ -130,7 +152,7 @@ export default class Buttoncluster extends Component<Props> {
             ).then(response=>{
                 console.log(response);
                 this.updatenum++;
-                if(this.updatenum !=1)
+                if(this.updatenum !=1 && this.skiptonext == true)
                 {
                     let counter = setTimeout(()=>this.SkiptoNextTrack(),1000);
                 }
@@ -191,6 +213,54 @@ export default class Buttoncluster extends Component<Props> {
         console.log("genre changed! current genre: "+genre);
 
     }
+    compareplayback = ()=>{
+
+        const headers = {
+            'Authorization':'Bearer '+this.props.access_token
+        }; 
+        axios.get(
+            `https://api.spotify.com/v1/me/player`,
+            {
+             headers:headers
+            }
+        ).then(recdata=>{
+            if(recdata.data.item.duration_ms)
+            {
+                console.log("durationms: "+recdata.data.item.duration_ms);
+                console.log("progressms: "+recdata.data.progress_ms);
+                if((recdata.data.item.duration_ms - recdata.data.progress_ms) < 2500 && !this.track_detection_lock)
+                {
+                this.track_is_ending = true;
+                this.track_detection_lock = true;
+                console.log("track ending!");
+                }
+                if((recdata.data.item.duration_ms - recdata.data.progress_ms) > 5000)
+                {
+                    this.track_detection_lock = false;
+                }
+            }
+            else
+                console.log("no spotify player");
+        }).catch(error=>{
+            if (error.response) {
+              // The request was made and the server responded with a status code
+              // that falls out of the range of 2xx
+              console.log(error.response.data);
+              console.log(error.response.status);
+              console.log(error.response.headers);
+            } else if (error.request) {
+              // The request was made but no response was received
+              // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+              // http.ClientRequest in node.js
+              console.log(error.request);
+            } else {
+              // Something happened in setting up the request that triggered an Error
+              console.log('Error', error.message);
+            }
+            console.log(error.config);
+                });    
+    }
+
     render(){
     return(
             <View style={styles.container}>
@@ -199,7 +269,7 @@ export default class Buttoncluster extends Component<Props> {
                             key = {label}
                             btnlabel = {label}
                             color='white'
-                            dummyhr = {this.props.dummyheartrate}
+                            dummyhr = {this.props.heartrate}
                             genrechange = {this.handlegenrechange}
                             btn_color={this.state.button_colors[index]}
                             genre_seed={this.state.genre_seed[index]}
