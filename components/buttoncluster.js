@@ -10,10 +10,10 @@ export default class Buttoncluster extends Component<Props> {
 
     state = {
         button_labels:[
-            "Lofi",
-            "Top 50",
+            "deephouse",
+            "top-50",
             "EDM",
-            "Throwback",
+            "metal-core",
             "running",
             "hip-hop",
         ],
@@ -25,6 +25,15 @@ export default class Buttoncluster extends Component<Props> {
             "#998fff",
             "#4649ec"
         ],
+        genre_seed:[
+            "deep-house",
+            "pop",
+            "edm",
+            "metalcore",
+            "funk",
+            "hip-hop"
+        ],
+        current_seed:"anime"
     };
         stablizer=0;
         accumulator=0;
@@ -63,7 +72,7 @@ export default class Buttoncluster extends Component<Props> {
         const data = qs.stringify({
             limit:1, 
             target_tempo:this.props.dummyheartrate,
-            seed_genres:"anime",
+            seed_genres:this.state.current_seed,
             min_danceability:0.5,
             market:"CA"
         });
@@ -177,6 +186,11 @@ export default class Buttoncluster extends Component<Props> {
             
 
     }
+    handlegenrechange = (genre)=> {
+        this.setState({...this.state, current_seed:genre })
+        console.log("genre changed! current genre: "+genre);
+
+    }
     render(){
     return(
             <View style={styles.container}>
@@ -186,7 +200,9 @@ export default class Buttoncluster extends Component<Props> {
                             btnlabel = {label}
                             color='white'
                             dummyhr = {this.props.dummyheartrate}
+                            genrechange = {this.handlegenrechange}
                             btn_color={this.state.button_colors[index]}
+                            genre_seed={this.state.genre_seed[index]}
                         />       
                 )
                 } 
@@ -202,6 +218,7 @@ class Categorybutton extends Component<Props>{
         return(
             <TouchableNativeFeedback
                 background={TouchableNativeFeedback.Ripple('#000000', false)}
+                onPress={()=>{this.props.genrechange(this.props.genre_seed)}}
             >
                 <View style = {{
                     width:115,
