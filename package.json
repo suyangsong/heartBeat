@@ -15,7 +15,7 @@
     "react-native": "0.59.8",
     "react-native-app-auth": "^4.4.0",
     "request": "^2.88.0",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.5.0"
   },
   "devDependencies": {
     "@babel/core": "7.4.5",
